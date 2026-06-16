@@ -1,5 +1,5 @@
 let
-  wireguardPort = 51820;
+  wireguardPort = 51337;
 in
 { config, pkgs, ... }:
 {
@@ -133,7 +133,6 @@ in
           PrivateKeyFile = config.sops.secrets."wireguard/pk.txt".path;
         };
         wireguardPeers = [
-          # akane
           {
             AllowedIPs = [
               "2a01:4f8:222:fee0::/60"
@@ -143,7 +142,7 @@ in
             ];
             RouteTable = "main";
             PublicKey = "gvAPp/g475vG9Jpj9b4rdPKPwhIKvuxynuw8EffMrGk=";
-            Endpoint = "akane.tie.rip:51820";
+            Endpoint = "akane.tie.rip:${toString wireguardPort}";
             PresharedKeyFile = config.sops.secrets."wireguard/psk.txt".path;
             PersistentKeepalive = 30;
           }

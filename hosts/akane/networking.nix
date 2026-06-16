@@ -41,7 +41,7 @@ let
       routeConfig = routeConfigs;
     };
 
-  wireguardPort = 51820;
+  wireguardPort = 51337;
   wireguardConfiguration = [
     {
       cidr = "2a01:4f8:222:fee0::1/60";

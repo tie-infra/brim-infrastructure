@@ -615,10 +615,28 @@ in
     };
   };
 
+  systemd.network.networks."10-bridge-lan-wglan-only" = {
+    matchConfig = {
+      Name = [ "enp3s0" ];
+    };
+    networkConfig = {
+      Bridge = bridgeInterface;
+      ConfigureWithoutCarrier = true;
+    };
+    bridgeVLANs = [
+      {
+        PVID = wglanVlanId;
+        EgressUntagged = wglanVlanId;
+      }
+    ];
+    linkConfig = {
+      RequiredForOnline = "no-carrier:enslaved";
+    };
+  };
+
   systemd.network.networks."10-bridge-lan-isplan-only" = {
     matchConfig = {
       Name = [
-        "enp3s0"
         "enp4s0"
         "enp5s0"
         "enp6s0"
@@ -812,8 +830,7 @@ in
     };
     dhcpV6Config = {
       UseDelegatedPrefix = true;
-      # TODO: added in systemd version 257.
-      #UnassignedSubnetPolicy = "none";
+      UnassignedSubnetPolicy = "none";
 
       # Note: for prefix delegations that are allocated dynamically if released.
       # Addresses can be safely released though. TODO: add prefixes/addresses

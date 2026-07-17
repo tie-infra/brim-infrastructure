@@ -20,6 +20,7 @@
           (import ./overlays/markdown-to-confluence.nix)
           (import ./overlays/mcp-atlassian.nix)
           (import ./overlays/caddy-with-plugins.nix)
+          (import ./overlays/pufferpanel/default.nix)
         ];
 
         config.allowUnfreePredicate =

@@ -21,7 +21,10 @@
       ./hosts/brim/syncthing.nix
       ./hosts/brim/sing-box.nix
     ];
-    kazuma = nixosWithSystem "x86_64-linux" [ ./hosts/kazuma/configuration.nix ];
+    kazuma = nixosWithSystem "x86_64-linux" [
+      ./hosts/kazuma/configuration.nix
+      ./hosts/kazuma/docker.nix
+    ];
     saitama = nixosWithSystem "x86_64-linux" [
       ./hosts/saitama/configuration.nix
       ./hosts/saitama/caddy.nix

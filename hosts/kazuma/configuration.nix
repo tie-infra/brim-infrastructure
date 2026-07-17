@@ -1,4 +1,9 @@
-{ pkgs, config, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   multicastDnsPort = 5353; # UDP
   llmnrPort = 5355; # UDP/TCP
@@ -84,7 +89,11 @@ in
 
   services.pufferpanel = {
     enable = true;
+    extraGroups = [
+      config.users.groups.podman.name
+    ];
     extraPackages = with pkgs; [
+      bash
       rust-server.oxide
       eco-server
       satisfactory-server
@@ -97,11 +106,12 @@ in
       PUFFER_WEB_HOST = ":${toString pufferpanelWebPort}";
       PUFFER_DAEMON_SFTP_HOST = ":${toString pufferpanelSftpPort}";
       PUFFER_PANEL_ENABLE = "false";
-      PUFFER_TOKEN_PUBLIC = "https://panel.brim.su/auth/publickey"; # deprecated in v3
+      PUFFER_TOKEN_PUBLIC = "https://panel.brim.su/auth/publickey";
       PUFFER_DAEMON_AUTH_URL = "https://panel.brim.su/oauth2/token";
       PUFFER_DAEMON_AUTH_CLIENTID = ".node_2";
       # PUFFER_DAEMON_AUTH_CLIENTSECRET is set via environmentFile
       PUFFER_DAEMON_CONSOLE_BUFFER = "1000";
+      PUFFER_SECURITY_DISABLEUNSHARE = "true";
     };
     environmentFile = config.sops.secrets."pufferpanel/env".path;
   };
@@ -112,4 +122,6 @@ in
       sopsFile = ../../secrets/kazuma.sops.yaml;
     };
   };
+
+  systemd.services.pufferpanel.serviceConfig.ProtectKernelTunables = lib.mkForce false;
 }

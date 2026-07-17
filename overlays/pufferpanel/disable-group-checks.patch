@@ -1,0 +1,18 @@
+diff --git a/cmd/user.go b/cmd/user.go
+index f2deb0cc..79364d3a 100644
+--- a/cmd/user.go
++++ b/cmd/user.go
+@@ -210,10 +210,9 @@ type userCreate struct {
+ }
+ 
+ func editUser(cmd *cobra.Command, args []string) {
+-	if !groups.IsUserIn(groups.PufferPanelGroup) {
+-		fmt.Printf("You do not have permission to use this command")
+-		return
+-	}
++	// Keeping import to avoid merge conflicts with future updates in case
++	// PufferPanel starts using this import elsewhere in this file.
++	_ = groups.PufferPanelGroup
+ 
+ 	db, err := database.GetConnection()
+ 	if err != nil {

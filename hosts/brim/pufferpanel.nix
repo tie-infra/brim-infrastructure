@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   ...
 }:
@@ -31,6 +32,7 @@ in
   services.pufferpanel = {
     enable = true;
     extraPackages = with pkgs; [
+      bash
       javaWrappers.java8
       javaWrappers.java17
       javaWrappers.java21
@@ -42,6 +44,9 @@ in
       PUFFER_PANEL_REGISTRATIONENABLED = "false";
       PUFFER_DAEMON_SFTP_HOST = ":${toString sftpPort}";
       PUFFER_DAEMON_CONSOLE_BUFFER = "1000";
+      PUFFER_SECURITY_DISABLEUNSHARE = "true";
     };
   };
+
+  systemd.services.pufferpanel.serviceConfig.ProtectKernelTunables = lib.mkForce false;
 }

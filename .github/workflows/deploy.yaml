@@ -46,7 +46,9 @@ jobs:
 
       - name: Build configuration
         run: |
-          nix run nixpkgs#nixos-rebuild -- build --fast --flake "$installable"
+          nix run nixpkgs#nixos-rebuild -- build \
+            --no-reexec \
+            --flake "$installable"
         env:
           installable: "github:${{ github.repository }}/${{ github.sha }}#${{ matrix.system }}"
 
@@ -69,7 +71,11 @@ jobs:
 
       - name: Switch configuration
         run: |
-          nix run nixpkgs#nixos-rebuild -- switch --fast --flake "$installable" --target-host "$target" --use-remote-sudo 
+          nix run nixpkgs#nixos-rebuild -- switch \
+            --no-reexec \
+            --flake "$installable" \
+            --target-host "$target" \
+            --elevate=sudo
         env:
           NIX_SSHOPTS: "-o CheckHostIP=no -o UserKnownHostsFile=known_hosts"
           installable: "github:${{ github.repository }}/${{ github.sha }}#${{ matrix.system }}"

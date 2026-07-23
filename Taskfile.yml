@@ -8,7 +8,7 @@ tasks:
   nixos-rebuild:
     internal: true
     cmds:
-      - nixos-rebuild {{.ACTION}} --sudo --no-reexec --build-host {{.BUILD_HOST}} --target-host {{.TARGET_HOST}} --flake {{.FLAKE_URI}}
+      - nixos-rebuild {{.ACTION}} --elevate=sudo --no-reexec --build-host {{.BUILD_HOST}} --target-host {{.TARGET_HOST}} --flake {{.FLAKE_URI}}
 
   switch:brim:
     cmds:

@@ -132,8 +132,18 @@ package, such as an `overrideAttrs` based on `prev`.
   Pass changed paths when possible, then inspect the diff for unrelated edits.
 - Preserve flake purity. Declare and pin dependencies as flake inputs or fixed
   output sources; do not use `<nixpkgs>`, ambient channels, or unpinned fetches.
-- Prefer simple attribute sets and `let` bindings. Avoid broad `with` scopes and
-  avoid `rec` unless recursive attributes are genuinely required.
+- Prefer simple attribute sets and narrowly scoped `let` bindings for values
+  independent of the derivation being constructed. Avoid broad `with` scopes.
+- For derivation self-references, prefer a builder's `finalAttrs: { ... }`
+  interface and refer to attributes such as `finalAttrs.version`,
+  `finalAttrs.src`, and `finalAttrs.finalPackage`. When a language-specific
+  builder does not support `finalAttrs`, use a narrow `rec` attribute set
+  instead of moving derivation attributes into `let` bindings solely to avoid
+  recursion.
+- Use `placeholder "out"`—or the appropriate named output—when a Nix-side
+  derivation attribute must refer to its own output before realization. Keep
+  using quoted `$out` inside shell phases; do not guess an output path or add
+  recursion merely to construct one.
 - Quote URLs. Use `lib` helpers instead of reimplementing common operations.
 - Treat derivation outputs and store paths as unknown, untrusted values. Do not
   interpolate them into Bash, systemd directives, JSON, TOML, YAML, or other

@@ -16,9 +16,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - server: nixos@kazuma.tie.rip
-            system: kazuma
-            sshKey: "kazuma.tie.rip ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDiWJmsj22woegXiWRA7GJ7guA/RHdksA1yBDpkgJ+dp"
+          - server: nixos@join.brim.su
+            system: brim
+            sshKey: "join.brim.su ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILl7KKsyGmUUAaaEAzWMudCARx+XSpzreACG98IzOFwF"
     name: Deploy ${{ matrix.system }}
     runs-on: ubuntu-latest
     steps:

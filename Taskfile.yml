@@ -10,166 +10,38 @@ tasks:
     cmds:
       - nixos-rebuild {{.ACTION}} --sudo --no-reexec --build-host {{.BUILD_HOST}} --target-host {{.TARGET_HOST}} --flake {{.FLAKE_URI}}
 
-  switch:saitama:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: switch
-          BUILD_HOST: nixos@saitama.tie.rip
-          TARGET_HOST: nixos@saitama.tie.rip
-          FLAKE_URI: .#saitama
   switch:brim:
     cmds:
       - task: nixos-rebuild
         vars:
           ACTION: switch
-          BUILD_HOST: nixos@brim.tie.rip
-          TARGET_HOST: nixos@brim.tie.rip
+          BUILD_HOST: nixos@join.brim.su
+          TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
-  switch:kazuma:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: switch
-          BUILD_HOST: nixos@kazuma.tie.rip
-          TARGET_HOST: nixos@kazuma.tie.rip
-          FLAKE_URI: .#kazuma
-  switch:akane:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: switch
-          BUILD_HOST: nixos@akane.tie.rip
-          TARGET_HOST: nixos@akane.tie.rip
-          FLAKE_URI: .#akane
-  switch:falcon:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: switch
-          BUILD_HOST: nixos@falcon.tie.rip
-          TARGET_HOST: nixos@falcon.tie.rip
-          FLAKE_URI: .#falcon
 
-  boot:saitama:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: boot
-          BUILD_HOST: nixos@saitama.tie.rip
-          TARGET_HOST: nixos@saitama.tie.rip
-          FLAKE_URI: .#saitama
   boot:brim:
     cmds:
       - task: nixos-rebuild
         vars:
           ACTION: boot
-          BUILD_HOST: nixos@brim.tie.rip
-          TARGET_HOST: nixos@brim.tie.rip
+          BUILD_HOST: nixos@join.brim.su
+          TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
-  boot:kazuma:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: boot
-          BUILD_HOST: nixos@kazuma.tie.rip
-          TARGET_HOST: nixos@kazuma.tie.rip
-          FLAKE_URI: .#kazuma
-  boot:akane:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: boot
-          BUILD_HOST: nixos@akane.tie.rip
-          TARGET_HOST: nixos@akane.tie.rip
-          FLAKE_URI: .#akane
-  boot:falcon:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: boot
-          BUILD_HOST: nixos@falcon.tie.rip
-          TARGET_HOST: nixos@falcon.tie.rip
-          FLAKE_URI: .#falcon
 
-  check:saitama:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: dry-activate
-          BUILD_HOST: nixos@saitama.tie.rip
-          TARGET_HOST: nixos@saitama.tie.rip
-          FLAKE_URI: .#saitama
   check:brim:
     cmds:
       - task: nixos-rebuild
         vars:
           ACTION: dry-activate
-          BUILD_HOST: nixos@brim.tie.rip
-          TARGET_HOST: nixos@brim.tie.rip
+          BUILD_HOST: nixos@join.brim.su
+          TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
-  check:kazuma:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: dry-activate
-          BUILD_HOST: nixos@kazuma.tie.rip
-          TARGET_HOST: nixos@kazuma.tie.rip
-          FLAKE_URI: .#kazuma
-  check:akane:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: dry-activate
-          BUILD_HOST: nixos@akane.tie.rip
-          TARGET_HOST: nixos@akane.tie.rip
-          FLAKE_URI: .#akane
-  check:falcon:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: dry-activate
-          BUILD_HOST: nixos@falcon.tie.rip
-          TARGET_HOST: nixos@falcon.tie.rip
-          FLAKE_URI: .#falcon
 
-  build:saitama:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: build
-          BUILD_HOST: nixos@saitama.tie.rip
-          TARGET_HOST: nixos@saitama.tie.rip
-          FLAKE_URI: .#saitama
   build:brim:
     cmds:
       - task: nixos-rebuild
         vars:
           ACTION: build
-          BUILD_HOST: nixos@brim.tie.rip
-          TARGET_HOST: nixos@brim.tie.rip
+          BUILD_HOST: nixos@join.brim.su
+          TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
-  build:kazuma:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: build
-          BUILD_HOST: nixos@kazuma.tie.rip
-          TARGET_HOST: nixos@kazuma.tie.rip
-          FLAKE_URI: .#kazuma
-  build:akane:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: build
-          BUILD_HOST: nixos@akane.tie.rip
-          TARGET_HOST: nixos@akane.tie.rip
-          FLAKE_URI: .#akane
-  build:falcon:
-    cmds:
-      - task: nixos-rebuild
-        vars:
-          ACTION: build
-          BUILD_HOST: nixos@falcon.tie.rip
-          TARGET_HOST: nixos@falcon.tie.rip
-          FLAKE_URI: .#falcon

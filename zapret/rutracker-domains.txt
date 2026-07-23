@@ -1,4 +1,0 @@
-rutracker.org
-rutracker.cc
-rutracker.wiki
-rutracker.net

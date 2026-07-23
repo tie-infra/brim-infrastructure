@@ -179,21 +179,21 @@ in
   };
 
   sops.secrets."garage-webui/user-pass" = {
-    sopsFile = ../../secrets/garage.sops.yaml;
+    sopsFile = ../../secrets/brim.sops.yaml;
     restartUnits = [ config.systemd.services.garage-webui.name ];
   };
 
   sops.secrets."garage/rpc-secret" = {
     mode = "0440"; # u=r,g=r,o=
     group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/garage.sops.yaml;
+    sopsFile = ../../secrets/brim.sops.yaml;
     restartUnits = [ config.systemd.services.garage.name ];
   };
 
   sops.secrets."garage/admin-token" = {
     mode = "0440"; # u=r,g=r,o=
     group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/garage.sops.yaml;
+    sopsFile = ../../secrets/brim.sops.yaml;
     restartUnits = [
       config.systemd.services.garage.name
       config.systemd.services.garage-webui.name
@@ -203,7 +203,7 @@ in
   sops.secrets."garage/metrics-token" = {
     mode = "0440"; # u=r,g=r,o=
     group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/garage.sops.yaml;
+    sopsFile = ../../secrets/brim.sops.yaml;
     restartUnits = [ config.systemd.services.garage.name ];
   };
 }

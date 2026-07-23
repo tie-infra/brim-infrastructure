@@ -161,6 +161,7 @@ in
             dryRun =
               pkgs.runCommand "${service.name}-${name}-check-config"
                 {
+                  __structuredAttrs = true;
                   nativeBuildInputs = [ service.package ];
                   executable = service.name;
                   configFile = configFile.overrideAttrs (oldAttrs: {

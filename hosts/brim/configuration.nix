@@ -1,7 +1,4 @@
-{
-  pkgs,
-  ...
-}:
+{ ... }:
 {
   system.stateVersion = "23.11";
 
@@ -26,14 +23,7 @@
   };
 
   services = {
-    mysql = {
-      enable = true;
-      package = pkgs.mariadb_1011;
-    };
-
-    postgresql = {
-      enable = true;
-      package = pkgs.postgresql_16;
-    };
+    mysql.enable = true;
+    postgresql.enable = true;
   };
 }

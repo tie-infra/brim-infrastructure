@@ -118,7 +118,6 @@ in
 
   services.garage = {
     enable = true;
-    package = pkgs.garage_2;
     settings = {
       metadata_dir = "meta";
       data_dir = "data";

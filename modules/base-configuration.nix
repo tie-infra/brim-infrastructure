@@ -136,7 +136,10 @@ in
       };
     };
 
-    # Extend caddy with non-standard plugins.
+    # Keep service package selections independent of host configuration.
     caddy.package = pkgs.caddy-with-plugins;
+    garage.package = pkgs.garage_2;
+    mysql.package = pkgs.mariadb_1011;
+    postgresql.package = pkgs.postgresql_16;
   };
 }

@@ -15,39 +15,19 @@ let
     inputs.sops-nix.nixosModules.sops
     ./modules/sops.nix
     ./modules/nix-flakes.nix
-    ./modules/mssfix.nix
-    ./modules/machine-info.nix
     ./modules/base-configuration.nix
     ./modules/btrfs-erase-your-darlings.nix
     ./modules/trust-admins.nix
     ./modules/outline.nix
-    ./modules/mumble-server.nix
-    ./modules/mumble-discord-bridge.nix
-    ./modules/mcp-atlassian.nix
-    ./modules/flood.nix
-    ./modules/jellyfin.nix
     ./modules/garage.nix
     ./modules/garage-webui.nix
-    ./modules/prowlarr.nix
-    ./modules/radarr.nix
-    ./modules/sonarr.nix
-    ./modules/transmission.nix
-    ./modules/xray.nix
     ./modules/zapret/nfqws.nix
     ./modules/zapret/nfqws-systemd.nix
     { inherit disabledModules; }
   ];
 
   disabledModules = [
-    "services/misc/jellyfin.nix"
-    "services/misc/servarr/prowlarr.nix"
-    "services/misc/servarr/radarr.nix"
-    "services/misc/servarr/sonarr.nix"
-    "services/networking/murmur.nix"
-    "services/networking/xray.nix"
     "services/networking/zapret.nix"
-    "services/torrent/flood.nix"
-    "services/torrent/transmission.nix"
     "services/web-apps/outline.nix"
     "services/web-servers/garage.nix"
   ];

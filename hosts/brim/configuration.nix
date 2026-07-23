@@ -19,11 +19,6 @@
     ];
   };
 
-  environment.machineInfo = {
-    chassis = "server";
-    location = "mtw.ru colocation";
-  };
-
   profiles.btrfs-erase-your-darlings = {
     enable = true;
     bootDisk = "/dev/disk/by-uuid/9F30-7212";

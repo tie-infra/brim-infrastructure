@@ -20,11 +20,6 @@
     btrfs-rollback.inputs.nixpkgs.follows = "nixpkgs";
     btrfs-rollback.inputs.flake-parts.follows = "flake-parts";
     btrfs-rollback.inputs.minimal-shell.follows = "minimal-shell";
-
-    steam-games.url = "github:tie-infra/steam-games";
-    steam-games.inputs.nixpkgs.follows = "nixpkgs";
-    steam-games.inputs.flake-parts.follows = "flake-parts";
-    steam-games.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =

@@ -3,9 +3,14 @@
   fetchFromGitHub,
   buildGo126Module,
 }:
-buildGo126Module rec {
-  pname = "caddy";
+let
   version = "2.11.4";
+in
+buildGo126Module {
+  __structuredAttrs = true;
+
+  pname = "caddy";
+  inherit version;
   src = ./caddy;
 
   vendorHash = "sha256-Lt43gRNb58Zmav7FJcmY/8X1dkEaKmPYvwn/8NvAQe8=";

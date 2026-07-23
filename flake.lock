@@ -87,7 +87,6 @@
         "minimal-shell": "minimal-shell",
         "nixpkgs": "nixpkgs",
         "sops-nix": "sops-nix",
-        "steam-games": "steam-games",
         "treefmt-nix": "treefmt-nix"
       }
     },
@@ -108,32 +107,6 @@
       "original": {
         "id": "sops-nix",
         "type": "indirect"
-      }
-    },
-    "steam-games": {
-      "inputs": {
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": [
-          "treefmt-nix"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780566870,
-        "narHash": "sha256-OrPsXYdkK1IcFJ7nmfVpue/HSwI1Z0RDW3rBLWPs6XA=",
-        "owner": "tie-infra",
-        "repo": "steam-games",
-        "rev": "111c5c55f8da49b0252b282506e8361d2acc9f1b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tie-infra",
-        "repo": "steam-games",
-        "type": "github"
       }
     },
     "treefmt-nix": {

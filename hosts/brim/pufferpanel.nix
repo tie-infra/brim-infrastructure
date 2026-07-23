@@ -33,10 +33,7 @@ in
     enable = true;
     extraPackages = with pkgs; [
       bash
-      javaWrappers.java8
-      javaWrappers.java17
-      javaWrappers.java21
-      javaWrappers.java25
+      java-wrappers
     ];
 
     environment = {

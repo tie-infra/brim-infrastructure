@@ -40,7 +40,6 @@
         inputs.minimal-shell.flakeModule
 
         ./nixpkgs.nix
-        ./installer.nix
         ./nixos-system.nix
         ./configurations.nix
       ];

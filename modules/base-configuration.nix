@@ -69,8 +69,7 @@ in
     # Disables DHCP on `en*` and `eth*` interfaces.
     # See https://github.com/NixOS/nixpkgs/blob/2920b6fc16a9ed5d51429e94238b28306ceda79e/nixos/modules/tasks/network-interfaces-systemd.nix#L49-L56
     #
-    # We enable DHCP in installer and bootstrap systems, but otherwise network
-    # configuration is host-specific.
+    # Network configuration is host-specific.
     useDHCP = lib.mkDefault false;
 
     # By default, NixOS logs refused TCP connections to the kernel log (see

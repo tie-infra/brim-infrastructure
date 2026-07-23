@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   minimalShells.direnv = with pkgs; [
-    nixpkgs-fmt
+    nixfmt
     sops
     ssh-to-age
     go-task

@@ -7,7 +7,7 @@
         handle = [
           {
             handler = "reverse_proxy";
-            upstreams = [ { dial = "62.217.184.232:1896"; } ];
+            upstreams = [ { dial = "195.170.194.163:1896"; } ];
           }
         ];
       }
@@ -17,7 +17,7 @@
         handle = [
           {
             handler = "reverse_proxy";
-            upstreams = [ { dial = "62.217.184.232:2017"; } ];
+            upstreams = [ { dial = "195.170.194.163:2017"; } ];
           }
         ];
       }

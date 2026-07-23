@@ -7,8 +7,6 @@ let
   version = "2.11.4";
 in
 buildGo126Module {
-  __structuredAttrs = true;
-
   pname = "caddy";
   inherit version;
   src = ./caddy;

@@ -7,7 +7,7 @@
         handle = [
           {
             handler = "reverse_proxy";
-            upstreams = [ { dial = "62.217.184.232:1896"; } ];
+            upstreams = [ { dial = "195.170.194.163:1896"; } ];
           }
         ];
       }
@@ -17,7 +17,22 @@
         handle = [
           {
             handler = "reverse_proxy";
-            upstreams = [ { dial = "62.217.184.232:2017"; } ];
+            upstreams = [ { dial = "195.170.194.163:2017"; } ];
+          }
+        ];
+      }
+      {
+        match = [ { host = [ "pubg.brim.su" ]; } ];
+        terminal = true;
+        handle = [
+          {
+            # The upstream is plain HTTP only; proxying it under forced TLS
+            # breaks the page (mixed content), so send the browser there
+            # directly. 302 keeps the redirect re-resolvable when the
+            # upstream address changes.
+            handler = "static_response";
+            status_code = 302; # Found
+            headers.Location = [ "http://195.170.194.163:7290/" ];
           }
         ];
       }

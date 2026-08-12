@@ -7,6 +7,7 @@ let
   websiteHosts = [
     "brim.su"
     "api.brim.su"
+    "pubg-wiki.brim.su"
   ];
 
   s3ApiHost = "s3.brim.su";

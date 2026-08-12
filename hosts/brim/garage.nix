@@ -71,6 +71,19 @@ in
         ];
         handle = [
           {
+            handler = "rewrite";
+            # Match paths whose final component:
+            # - is non-empty
+            # - contains no dot
+            # - does not end in a slash
+            path_regexp = [
+              {
+                find = "^(.*/[^./]+)$";
+                replace = "$1.html";
+              }
+            ];
+          }
+          {
             handler = "reverse_proxy";
             upstreams = [
               {

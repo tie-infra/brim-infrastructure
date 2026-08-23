@@ -1,8 +1,17 @@
 {
+  config,
   lib,
+  options,
   pkgs,
   ...
 }:
+let
+  # The upstream sing-box module runs the service under its own account, which
+  # is what the zapret rules below use to recognize the relay's own traffic.
+  singBoxUser = config.systemd.services.sing-box.serviceConfig.User;
+
+  nftablesCheckRedirects = options.networking.nftables.checkRulesetRedirects.default;
+in
 {
   networking = {
     hostName = "brim";
@@ -95,19 +104,41 @@
   };
 
   # https://github.com/bol-van/zapret?tab=readme-ov-file#nftables-для-nfqws
-  networking.nftables.tables.zapret = {
-    family = "inet";
-    content = ''
-      chain pre {
-        type filter hook prerouting priority filter;
-        tcp sport {80,443} ct reply packets 1-3 queue num 200 bypass
-      }
-      chain post {
-        type filter hook postrouting priority mangle;
-        meta mark and 0x40000000 == 0 tcp dport {80,443} ct original packets 1-6 queue num 200 bypass
-        meta mark and 0x40000000 == 0 udp dport 443 ct original packets 1-6 queue num 200 bypass
-      }
-    '';
+  networking.nftables = {
+    tables.zapret = {
+      family = "inet";
+      content = ''
+        chain pre {
+          type filter hook prerouting priority filter;
+          tcp sport {80,443} ct reply packets 1-3 queue num 200 bypass
+        }
+        chain post {
+          type filter hook postrouting priority mangle;
+
+          # Packets nfqws reinjects itself carry this mark; queueing them
+          # again would feed the desync back into its own queue.
+          meta mark and 0x40000000 != 0 return
+
+          # sing-box relays every client through a single hysteria2 outbound
+          # to vpn.brim.su:443/UDP, so the QUIC rule below matches the tunnel
+          # itself. Desync exists for censored destinations, not for the
+          # relay's own transport: routing its handshake through nfqws adds a
+          # userspace hop to the one leg every relayed session depends on.
+          meta skuid "${singBoxUser}" return
+
+          tcp dport {80,443} ct original packets 1-6 queue num 200 bypass
+          udp dport 443 ct original packets 1-6 queue num 200 bypass
+        }
+      '';
+    };
+
+    # nft resolves user names through the account database while parsing the
+    # ruleset, and the build-time check runs in a sandbox that has none.
+    checkRulesetRedirects = nftablesCheckRedirects // {
+      "/etc/passwd" = pkgs.writeText "nftables-check-passwd" ''
+        ${singBoxUser}:x:65534:65534::/var/empty:/bin/false
+      '';
+    };
   };
 
   boot.kernel.sysctl."net.netfilter.nf_conntrack_tcp_be_liberal" = true;

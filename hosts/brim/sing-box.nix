@@ -132,9 +132,43 @@ in
             server_name = "vpn.brim.su";
           };
         }
+        {
+          type = "direct";
+          tag = "direct";
+        }
       ];
 
       route = {
+        rules = [
+          # Russian services refuse or blackhole foreign and datacenter
+          # addresses, so relaying them abroad and back only costs latency —
+          # or fails outright. pass.yandex.ru is the clearest case: from the
+          # exit node it times out identically over IPv4, over IPv6 and
+          # through WARP, which is why it cannot be fixed by routing on that
+          # side. This host has a Russian address and reaches them directly.
+          {
+            domain_suffix = [
+              "2gis.ru"
+              "avito.ru"
+              "gosuslugi.ru"
+              "kinopoisk.ru"
+              "mail.ru"
+              "ok.ru"
+              "ozon.ru"
+              "rutube.ru"
+              "sberbank.ru"
+              "userapi.com"
+              "vk.com"
+              "vk.ru"
+              "wildberries.ru"
+              "ya.ru"
+              "yandex.net"
+              "yandex.ru"
+              "yastatic.net"
+            ];
+            outbound = "direct";
+          }
+        ];
         final = "hy2-out";
       };
     };

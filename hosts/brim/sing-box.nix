@@ -30,12 +30,7 @@ in
     enable = true;
     settings = {
       log = {
-        # Temporary, for the relay.brim.su session-drop investigation: at
-        # "info" a re-established hysteria2 outbound is not printed at all, so
-        # the suspected QUIC reconnect to vpn.brim.su leaves no trace. Restore
-        # "info" once the logs are collected; "debug" also records the
-        # destination of every relayed connection.
-        level = "debug";
+        level = "info";
       };
 
       inbounds = [

@@ -1,4 +1,5 @@
 {
+  lib,
   modulesPath,
   ...
 }:
@@ -8,6 +9,11 @@
   ];
 
   system.stateVersion = "26.05";
+
+  # Aeza provisions bram with a persistent ext4 /etc (including
+  # /etc/ssh/ssh_host_ed25519_key); modules/base-configuration.nix enables
+  # overlay /etc for ephemeral btrfs roots, which hides /etc on live switch.
+  system.etc.overlay.enable = lib.mkForce false;
 
   boot = {
     initrd.availableKernelModules = [

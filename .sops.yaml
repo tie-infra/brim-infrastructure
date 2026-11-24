@@ -1,5 +1,6 @@
 keys:
   - &server_brim age15c06e7kj3t5vjxp7tjkal2qs655wvzgh7qy8h4rk6hpkrlzvssjqyp84zw
+  - &server_bram age182wk4s4pg8zln736s2jdchvhxd922emvmw54dlezvcpy7krrge7qntly4n
   - &admin_tie age1y20x3mwhjaax0q5zc9mwytuste6r02m2m2ee26sz4595u0yxtp3qpk9z4t
   - &admin_brim age1fd38nsq5lnwy0p9vtgtf6u0tzjpsmv965vt2nez2frcz5tud4pqq0f0eng
 creation_rules:
@@ -9,3 +10,9 @@ creation_rules:
         - *admin_tie
         - *admin_brim
         - *server_brim
+  - path_regex: ^secrets[/\\]bram\.sops\.yaml$
+    key_groups:
+      - age:
+        - *admin_tie
+        - *admin_brim
+        - *server_bram

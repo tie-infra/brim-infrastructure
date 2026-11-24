@@ -12,5 +12,11 @@
       ./hosts/brim/syncthing.nix
       ./hosts/brim/sing-box.nix
     ];
+
+    bram = nixosWithSystem "x86_64-linux" [
+      ./hosts/bram/configuration.nix
+      ./hosts/bram/networking.nix
+      ./hosts/bram/wireguard.nix
+    ];
   };
 }

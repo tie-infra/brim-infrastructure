@@ -45,3 +45,21 @@ tasks:
           BUILD_HOST: nixos@join.brim.su
           TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
+
+    switch:bram:
+    cmds:
+      - task: nixos-rebuild
+        vars:
+          ACTION: switch
+          BUILD_HOST: nixos@bram-spare.brim.su
+          TARGET_HOST: nixos@bram-spare.brim.su
+          FLAKE_URI: .#bram
+
+  check:bram:
+    cmds:
+      - task: nixos-rebuild
+        vars:
+          ACTION: dry-activate
+          BUILD_HOST: nixos@bram-spare.brim.su
+          TARGET_HOST: nixos@bram-spare.brim.su
+          FLAKE_URI: .#bram

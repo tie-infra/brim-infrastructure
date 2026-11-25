@@ -46,7 +46,7 @@ tasks:
           TARGET_HOST: nixos@join.brim.su
           FLAKE_URI: .#brim
 
-    switch:bram:
+  switch:bram:
     cmds:
       - task: nixos-rebuild
         vars:

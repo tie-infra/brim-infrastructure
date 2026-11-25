@@ -14,6 +14,7 @@ concurrency:
 jobs:
   deploy:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - server: nixos@join.brim.su
@@ -88,4 +89,6 @@ jobs:
       - name: Delete WARP registration
         if: always()
         run: |
-          warp-cli --accept-tos registration delete
+          if type -P warp-cli >/dev/null 2>&1; then
+            warp-cli --accept-tos registration delete
+          fi

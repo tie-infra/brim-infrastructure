@@ -34,7 +34,7 @@ in
         chain postrouting {
           type nat hook postrouting priority srcnat; policy accept;
           oifname "${wanInterface}" ip saddr 10.66.0.0/23 snat ip to ${activeIpv4}
-          oifname "${wanInterface}" ip6 saddr fd66:66::/48 snat ip6 to ${activeIpv6}
+          oifname "${wanInterface}" ip6 saddr fd66:66::/32 snat ip6 to ${activeIpv6}
         }
       '';
     };

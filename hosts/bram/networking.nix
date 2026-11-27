@@ -3,8 +3,8 @@ let
 
   # Active exit/tunnel IPv4. To fail over after an IP block, swap activeIpv4
   # and spareIpv4 and deploy.
-  activeIpv4 = "77.221.155.29";
-  spareIpv4 = "217.144.189.29";
+  activeIpv4 = "217.144.189.29";
+  spareIpv4 = "77.221.155.29";
   activeIpv6 = "2a01:e5c0:4ce3::2";
 in
 {
@@ -17,26 +17,6 @@ in
       allowedTCPPorts = [ ];
       allowedUDPPorts = [ ];
       filterForward = true;
-      extraForwardRules = ''
-        iifname "wg0" oifname "${wanInterface}" accept
-      '';
-    };
-
-    nftables.tables.vpn-nat = {
-      family = "inet";
-      content = ''
-        chain forward-mss {
-          type filter hook forward priority mangle; policy accept;
-          iifname "wg0" tcp flags syn tcp option maxseg size set rt mtu
-          oifname "wg0" tcp flags syn tcp option maxseg size set rt mtu
-        }
-
-        chain postrouting {
-          type nat hook postrouting priority srcnat; policy accept;
-          oifname "${wanInterface}" ip saddr 10.66.0.0/24 snat ip to ${activeIpv4}
-          oifname "${wanInterface}" ip6 saddr fd66:66::/64 snat ip6 to ${activeIpv6}
-        }
-      '';
     };
   };
 

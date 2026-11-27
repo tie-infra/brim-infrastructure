@@ -110,6 +110,11 @@ in
       content = ''
         chain pre {
           type filter hook prerouting priority filter;
+
+          # Traffic decrypted from the Amsterdam AWG tunnel never traverses
+          # Russian DPI and must not be fed into nfqws.
+          iifname "awg0" return
+
           tcp sport {80,443} ct reply packets 1-3 queue num 200 bypass
         }
         chain post {
@@ -119,11 +124,12 @@ in
           # again would feed the desync back into its own queue.
           meta mark and 0x40000000 != 0 return
 
-          # sing-box relays every client through a single hysteria2 outbound
-          # to vpn.brim.su:443/UDP, so the QUIC rule below matches the tunnel
-          # itself. Desync exists for censored destinations, not for the
-          # relay's own transport: routing its handshake through nfqws adds a
-          # userspace hop to the one leg every relayed session depends on.
+          # Never desync traffic routed into the Amsterdam AWG tunnel.
+          oifname "awg0" return
+
+          # sing-box relays foreign client traffic through the bram AWG tunnel
+          # and sends domestic RU traffic directly. Desync exists for censored
+          # host services (e.g. Outline Discord OAuth), not for sing-box.
           meta skuid "${singBoxUser}" return
 
           tcp dport {80,443} ct original packets 1-6 queue num 200 bypass

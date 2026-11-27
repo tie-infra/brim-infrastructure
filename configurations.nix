@@ -4,6 +4,7 @@
     brim = nixosWithSystem "x86_64-linux" [
       ./hosts/brim/configuration.nix
       ./hosts/brim/networking.nix
+      ./hosts/brim/amneziawg.nix
       ./hosts/brim/caddy.nix
       ./hosts/brim/caddy-routes.nix
       ./hosts/brim/outline.nix

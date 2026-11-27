@@ -1,30 +1,145 @@
 {
   config,
+  lib,
+  pkgs,
   ...
 }:
 let
-  singboxPort = 18443;
-
-  # Caddy already listens on :443 for both TCP and UDP (it serves HTTP/3), so
-  # the Hysteria2 inbound cannot take 443/UDP without disabling h3 there.
+  # Caddy owns :443 TCP+UDP (HTTP/3), so both sing-box client inbounds share
+  # port 8443: Hysteria 2 on 8443/UDP and VLESS Reality on 8443/TCP.
+  relayHost = "relay.brim.su";
   hysteriaPort = 8443;
+  vlessRealityPort = 8443;
+  realitySni = "brim.su";
+  realityPublicKey = "sNPEeXUVrsBMiSRrPWxuEB92YiinA7lGwB7gRXohKjQ";
+  realityShortId = "9eaaca28ab83067c";
+
+  # Legacy Happ subscription endpoint: https://vpn.brim.su:8000/sub/<token>
+  subPublicPort = 8000;
+  subBackendPort = 18000;
+
+  # Tunnel IPv4/IPv6 assigned to brim's awg0 (routed via policy table 100 -> bram).
+  awgIpv4 = "10.66.1.2";
+  awgIpv6 = "fd66:66:1::2";
+
+  vpnUsers = [
+    "brim"
+    "krudanny"
+    "wenerra"
+    "ojegova"
+    "Serg_Denisoff"
+    "leoden7"
+    "dtv46"
+  ];
+
+  ruDomainSuffixes = [
+    "ru"
+    "su"
+    "xn--p1ai"
+    "2gis.com"
+    "avito.st"
+    "brimworld.online"
+    "ozonusercontent.com"
+    "userapi.com"
+    "vk.com"
+    "vk.me"
+    "vkuseraudio.net"
+    "vkuserlive.net"
+    "vkuservideo.net"
+    "wbstatic.net"
+    "yandex.net"
+    "yastatic.net"
+  ];
+
+  singBoxService = config.systemd.services.sing-box.name;
+  happSubService = config.systemd.services.happ-sub.name;
+  userRestartUnits = [
+    singBoxService
+    happSubService
+  ];
+
+  mkUserSecrets =
+    user:
+    lib.listToAttrs [
+      {
+        name = "sing-box/users/${user}/hy2-password";
+        value = {
+          sopsFile = ../../secrets/brim.sops.yaml;
+          restartUnits = userRestartUnits;
+        };
+      }
+      {
+        name = "sing-box/users/${user}/vless-uuid";
+        value = {
+          sopsFile = ../../secrets/brim.sops.yaml;
+          restartUnits = userRestartUnits;
+        };
+      }
+    ];
 in
 {
-  services.caddy.settings.apps.http.servers.default = {
+  networking.firewall = {
+    allowedTCPPorts = [
+      vlessRealityPort
+      subPublicPort
+    ];
+    allowedUDPPorts = [
+      hysteriaPort
+      subPublicPort
+    ];
+  };
+
+  # Serve legacy Happ subscription URLs on https://vpn.brim.su:8000/sub/<token>
+  # using Caddy's existing *.brim.su wildcard certificate.
+  services.caddy.settings.apps.http.servers.happ_sub = {
+    listen = [ ":${toString subPublicPort}" ];
     routes = [
       {
-        match = [ { host = [ "relay.brim.su" ]; } ];
+        match = [
+          {
+            host = [ "vpn.brim.su" ];
+            path = [ "/sub/*" ];
+          }
+        ];
+        terminal = true;
         handle = [
           {
             handler = "reverse_proxy";
-            upstreams = [ { dial = "localhost:${toString singboxPort}"; } ];
+            upstreams = [ { dial = "localhost:${toString subBackendPort}"; } ];
+          }
+        ];
+      }
+      {
+        handle = [
+          {
+            handler = "static_response";
+            status_code = 404;
           }
         ];
       }
     ];
   };
 
-  networking.firewall.allowedUDPPorts = [ hysteriaPort ];
+  services.happ-sub = {
+    enable = true;
+    host = "::1";
+    port = subBackendPort;
+    serverHost = relayHost;
+    hy2Port = hysteriaPort;
+    hy2Sni = relayHost;
+    vlessPort = vlessRealityPort;
+    inherit
+      realitySni
+      realityPublicKey
+      realityShortId
+      ;
+    marzbanSecretFile = config.sops.secrets."happ-sub/marzban-jwt-secret".path;
+    hy2ObfsFile = config.sops.secrets."sing-box/hy2-obfs".path;
+    users = lib.genAttrs vpnUsers (user: {
+      hy2PasswordFile = config.sops.secrets."sing-box/users/${user}/hy2-password".path;
+      vlessUuidFile = config.sops.secrets."sing-box/users/${user}/vless-uuid".path;
+    });
+  };
 
   services.sing-box = {
     enable = true;
@@ -33,50 +148,66 @@ in
         level = "info";
       };
 
+      dns = {
+        servers = [
+          # Resolve foreign domains through Quad9 DNS10 over the Amsterdam AWG
+          # tunnel so clients receive clean, non-localized A and AAAA answers.
+          {
+            type = "tls";
+            tag = "quad9-abroad";
+            server = "9.9.9.10";
+            tls = {
+              enabled = true;
+              server_name = "dns10.quad9.net";
+            };
+            detour = "bram-awg";
+          }
+          # Resolve Russian domains via brim's domestic Moscow DNS directly.
+          {
+            type = "udp";
+            tag = "ru-local";
+            server = "93.95.97.2";
+            detour = "direct";
+          }
+        ];
+        rules = [
+          {
+            domain_suffix = ruDomainSuffixes;
+            server = "ru-local";
+          }
+        ];
+        final = "quad9-abroad";
+        strategy = "prefer_ipv6";
+      };
+
       inbounds = [
-        # Clients reach the relay over Hysteria2. VLESS+WS+TLS below stopped
-        # connecting from the user's ISP in September 2026 — the TLS-in-TLS
-        # pattern is filtered, while the relay itself stayed reachable (a
-        # WebSocket upgrade from outside Russia still answered 101 on every
-        # attempt, over both IPv4 and IPv6). Hysteria2 moves that leg to UDP
-        # with salamander obfuscation; it is RU→RU traffic, so the
-        # cross-border throttling of high-bitrate UDP does not apply to it.
+        # Primary mobile/desktop transport: Hysteria 2 (UDP + salamander obfs)
+        # on domestic RU -> brim leg, leaving congestion control on BBR.
         {
           type = "hysteria2";
           tag = "hy2-in";
           listen = "::";
           listen_port = hysteriaPort;
-          users = [
-            {
-              name = "pc";
-              password = {
-                _secret = config.sops.secrets."hysteria2/pc-auth".path;
-              };
-            }
-          ];
+          users = map (user: {
+            name = user;
+            password = {
+              _secret = config.sops.secrets."sing-box/users/${user}/hy2-password".path;
+            };
+          }) vpnUsers;
           obfs = {
             type = "salamander";
             password = {
-              _secret = config.sops.secrets."hysteria2/inbound-obfs".path;
+              _secret = config.sops.secrets."sing-box/hy2-obfs".path;
             };
           };
-          # Deliberately no up_mbps/down_mbps: leaving them unset selects BBR
-          # instead of Brutal. Brutal ignores packet loss by design, which is
-          # the wrong trade on a domestic link that measures clean anyway.
           tls = {
             enabled = true;
-            server_name = "relay.brim.su";
-            # Caddy holds the *.brim.su wildcard but keeps it in its own state
-            # directory, unreadable by the sing-box user, so this obtains a
-            # separate certificate over DNS-01 with the token Caddy already
-            # uses. The two never collide: the challenge records differ
-            # (_acme-challenge.brim.su vs _acme-challenge.relay.brim.su).
-            #
+            server_name = relayHost;
             # Inline ACME is deprecated in sing-box 1.14 and removed in 1.16 —
             # migrate to a certificate provider before that bump:
             # https://sing-box.sagernet.org/migration/#migrate-inline-acme-to-certificate-provider
             acme = {
-              domain = [ "relay.brim.su" ];
+              domain = [ relayHost ];
               email = "dev@brim.su";
               dns01_challenge = {
                 provider = "cloudflare";
@@ -88,45 +219,51 @@ in
           };
         }
 
-        # Kept as a fallback: it costs nothing while idle, and if Hysteria2 is
-        # ever filtered too, clients can switch back without a deploy.
+        # TCP fallback: VLESS + XTLS Vision + Reality handshaking against
+        # local Caddy on 127.0.0.1:443 (valid TLS 1.3 cert for brim.su on the
+        # exact same IP, zero latency, no SNI/IP mismatch).
         {
           type = "vless";
-          tag = "vless-ws-in";
-          listen = "::1";
-          listen_port = singboxPort;
-          users = [
-            {
-              uuid = "1ea52fe2-2e51-4951-9b0c-4f8c16e47890";
-            }
-          ];
-          transport = {
-            type = "ws";
-            path = "/relay";
+          tag = "vless-reality-in";
+          listen = "::";
+          listen_port = vlessRealityPort;
+          users = map (user: {
+            name = user;
+            uuid = {
+              _secret = config.sops.secrets."sing-box/users/${user}/vless-uuid".path;
+            };
+            flow = "xtls-rprx-vision";
+          }) vpnUsers;
+          tls = {
+            enabled = true;
+            server_name = realitySni;
+            reality = {
+              enabled = true;
+              handshake = {
+                server = "127.0.0.1";
+                server_port = 443;
+              };
+              private_key = {
+                _secret = config.sops.secrets."sing-box/reality-private-key".path;
+              };
+              short_id = [ realityShortId ];
+            };
           };
         }
       ];
 
       outbounds = [
+        # Foreign exit: bind sockets to brim's awg0 IPv4/IPv6 so policy table
+        # 100 routes them through the reversed AWG 3.1 tunnel to bram (clean
+        # Amsterdam IPv4 + IPv6).
         {
-          type = "hysteria2";
-          tag = "hy2-out";
-          server = "vpn.brim.su";
-          server_port = 443;
-          password = {
-            _secret = config.sops.secrets."hysteria2/moscow-auth".path;
-          };
-          obfs = {
-            type = "salamander";
-            password = {
-              _secret = config.sops.secrets."hysteria2/obfs-password".path;
-            };
-          };
-          tls = {
-            enabled = true;
-            server_name = "vpn.brim.su";
-          };
+          type = "direct";
+          tag = "bram-awg";
+          inet4_bind_address = awgIpv4;
+          inet6_bind_address = awgIpv6;
+          bind_address_no_port = true;
         }
+        # Domestic exit: Russian destinations stay directly on Moscow enp3s0f0.
         {
           type = "direct";
           tag = "direct";
@@ -134,72 +271,67 @@ in
       ];
 
       route = {
-        rules = [
-          # Russian services refuse or blackhole foreign and datacenter
-          # addresses, so relaying them abroad and back only costs latency —
-          # or fails outright. pass.yandex.ru is the clearest case: from the
-          # exit node it times out identically over IPv4, over IPv6 and
-          # through WARP, which is why it cannot be fixed by routing on that
-          # side. This host has a Russian address and reaches them directly.
+        rule_set = [
           {
-            domain_suffix = [
-              "2gis.ru"
-              "avito.ru"
-              "gosuslugi.ru"
-              "kinopoisk.ru"
-              "mail.ru"
-              "ok.ru"
-              "ozon.ru"
-              "rutube.ru"
-              "sberbank.ru"
-              "userapi.com"
-              "vk.com"
-              "vk.ru"
-              "wildberries.ru"
-              "ya.ru"
-              "yandex.net"
-              "yandex.ru"
-              "yastatic.net"
-            ];
+            type = "local";
+            tag = "geoip-ru";
+            format = "binary";
+            path = "${pkgs.sing-geoip}/share/sing-box/rule-set/geoip-ru.srs";
+          }
+        ];
+        rules = [
+          {
+            action = "sniff";
+          }
+          # Prevent relayed VPN clients from reaching loopback or private
+          # backend services hosted on brim or inside tunnel subnets.
+          {
+            ip_is_private = true;
+            action = "reject";
+          }
+          {
+            domain_suffix = ruDomainSuffixes;
+            outbound = "direct";
+          }
+          {
+            rule_set = [ "geoip-ru" ];
             outbound = "direct";
           }
         ];
-        final = "hy2-out";
+        final = "bram-awg";
+        default_domain_resolver = {
+          server = "quad9-abroad";
+          strategy = "prefer_ipv6";
+        };
       };
     };
   };
 
-  sops.secrets."hysteria2/moscow-auth" = {
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [
-      config.systemd.services.sing-box.name
-    ];
+  systemd.services.sing-box = {
+    after = [ config.systemd.services.amneziawg-awg0.name ];
+    wants = [ config.systemd.services.amneziawg-awg0.name ];
   };
 
-  sops.secrets."hysteria2/obfs-password" = {
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [
-      config.systemd.services.sing-box.name
-    ];
-  };
-
-  sops.secrets."hysteria2/pc-auth" = {
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [
-      config.systemd.services.sing-box.name
-    ];
-  };
-
-  sops.secrets."hysteria2/inbound-obfs" = {
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [
-      config.systemd.services.sing-box.name
-    ];
-  };
-
-  # Declared with its own sopsFile in caddy.nix; this only adds sing-box to the
-  # units restarted when the token rotates.
-  sops.secrets."cloudflare/dns-api-token".restartUnits = [
-    config.systemd.services.sing-box.name
-  ];
+  sops.secrets = lib.mkMerge (
+    [
+      {
+        "happ-sub/marzban-jwt-secret" = {
+          sopsFile = ../../secrets/brim.sops.yaml;
+          restartUnits = [ happSubService ];
+        };
+        "sing-box/hy2-obfs" = {
+          sopsFile = ../../secrets/brim.sops.yaml;
+          restartUnits = userRestartUnits;
+        };
+        "sing-box/reality-private-key" = {
+          sopsFile = ../../secrets/brim.sops.yaml;
+          restartUnits = [ singBoxService ];
+        };
+        # Declared with its own sopsFile in caddy.nix; this only adds
+        # sing-box to the units restarted when the token rotates.
+        "cloudflare/dns-api-token".restartUnits = [ singBoxService ];
+      }
+    ]
+    ++ map mkUserSecrets vpnUsers
+  );
 }

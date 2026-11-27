@@ -22,6 +22,7 @@ let
     ./modules/outline.nix
     ./modules/garage.nix
     ./modules/garage-ui.nix
+    ./modules/happ-sub.nix
     ./modules/zapret/nfqws.nix
     ./modules/zapret/nfqws-systemd.nix
     { inherit disabledModules; }

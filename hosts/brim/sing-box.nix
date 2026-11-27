@@ -167,7 +167,6 @@ in
             type = "udp";
             tag = "ru-local";
             server = "93.95.97.2";
-            detour = "direct";
           }
         ];
         rules = [

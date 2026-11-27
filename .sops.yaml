@@ -16,3 +16,8 @@ creation_rules:
         - *admin_tie
         - *admin_brim
         - *server_bram
+  - path_regex: ^secrets[/\\]broom\.sops\.yaml$
+    key_groups:
+      - age:
+        - *admin_tie
+        - *admin_brim

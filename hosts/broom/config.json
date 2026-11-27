@@ -1,0 +1,449 @@
+{
+  "host": "root@192.168.1.1",
+  "sopsFile": "secrets/broom.sops.yaml",
+  "rollbackTimeoutSeconds": 60,
+  "requiredPackages": [
+    "amneziawg-tools",
+    "ca-bundle",
+    "curl",
+    "dnsmasq-full",
+    "https-dns-proxy",
+    "ip-full",
+    "kmod-amneziawg",
+    "luci-app-https-dns-proxy",
+    "luci-proto-amneziawg"
+  ],
+  "files": [
+    {
+      "source": "hosts/broom/files/etc/vpn-pbr/update-ru-ips.sh",
+      "dest": "/etc/vpn-pbr/update-ru-ips.sh",
+      "mode": "0755"
+    },
+    {
+      "source": "hosts/broom/files/usr/share/nftables.d/ruleset-post/90-vpn-pbr.nft",
+      "dest": "/usr/share/nftables.d/ruleset-post/90-vpn-pbr.nft",
+      "mode": "0644",
+      "triggers": ["firewall"]
+    },
+    {
+      "source": "hosts/broom/files/etc/crontabs/root",
+      "dest": "/etc/crontabs/root",
+      "mode": "0600",
+      "triggers": ["cron"]
+    },
+    {
+      "source": "hosts/broom/files/etc/apk/repositories.d/customfeeds.list",
+      "dest": "/etc/apk/repositories.d/customfeeds.list",
+      "mode": "0644"
+    }
+  ],
+  "uci": {
+    "system": {
+      "triggers": ["system"],
+      "sections": [
+        {
+          "section": "@system[0]",
+          "options": {
+            "hostname": "broom",
+            "timezone": "GMT0",
+            "zonename": "UTC",
+            "ttylogin": "0",
+            "log_size": "128",
+            "urandom_seed": "0"
+          }
+        },
+        {
+          "section": "ntp",
+          "type": "timeserver",
+          "options": {
+            "enabled": "1",
+            "enable_server": "0"
+          },
+          "lists": {
+            "server": [
+              "0.openwrt.pool.ntp.org",
+              "1.openwrt.pool.ntp.org",
+              "2.openwrt.pool.ntp.org",
+              "3.openwrt.pool.ntp.org"
+            ]
+          }
+        },
+        {
+          "section": "led_wan",
+          "type": "led",
+          "options": {
+            "name": "wan",
+            "sysfs": "blue:wan",
+            "trigger": "netdev",
+            "mode": "link tx rx",
+            "dev": "wan"
+          }
+        }
+      ]
+    },
+    "network": {
+      "triggers": ["network"],
+      "sections": [
+        {
+          "section": "wan",
+          "type": "interface",
+          "options": {
+            "device": "wan",
+            "proto": "dhcp",
+            "hostname": "SNR-CPE-AX2",
+            "peerdns": "0",
+            "sendclientid": "none"
+          },
+          "lists": {
+            "dns": [
+              "9.9.9.10",
+              "149.112.112.10"
+            ]
+          }
+        },
+        {
+          "section": "wan6",
+          "type": "interface",
+          "options": {
+            "device": "wan",
+            "proto": "dhcpv6",
+            "disabled": "1"
+          }
+        },
+        {
+          "section": "awg0",
+          "type": "interface",
+          "options": {
+            "proto": "amneziawg",
+            "private_key": {
+              "secretRef": ["amneziawg", "bram", "private-key"]
+            },
+            "listen_port": "41763",
+            "mtu": "1340",
+            "awg_jc": "4",
+            "awg_jmin": "48",
+            "awg_jmax": "312",
+            "awg_s1": "38",
+            "awg_s2": "64",
+            "awg_s3": "28",
+            "awg_s4": "24",
+            "awg_h1": "184231040-219845120",
+            "awg_h2": "612940210-658412900",
+            "awg_h3": "1194823100-1248192400",
+            "awg_h4": "1742918400-1798412900",
+            "awg_header_protection_key": {
+              "secretRef": ["amneziawg", "bram", "header-protection-key"]
+            },
+            "awg_content_padding_addition": "0-48",
+            "awg_rekey_after_time": "150-165",
+            "awg_keepalive_timeout": "35-45",
+            "awg_random_trailers": "on",
+            "awg_disable_cookies": "on"
+          },
+          "lists": {
+            "addresses": [
+              "10.66.0.2/30"
+            ]
+          }
+        },
+        {
+          "section": "awg0_bram",
+          "type": "amneziawg_awg0",
+          "options": {
+            "description": "bram",
+            "public_key": "tyDibnyKG7+AF6pN+yeK/kV3FVjBQiJILEGoHJTWUSc=",
+            "preshared_key": {
+              "secretRef": ["amneziawg", "bram", "preshared-key"]
+            },
+            "route_allowed_ips": "0"
+          },
+          "lists": {
+            "allowed_ips": [
+              "0.0.0.0/0"
+            ]
+          }
+        },
+        {
+          "section": "vpn_default",
+          "type": "route",
+          "options": {
+            "interface": "awg0",
+            "target": "0.0.0.0/0",
+            "table": "100"
+          }
+        },
+        {
+          "section": "vpn_src_rule",
+          "type": "rule",
+          "options": {
+            "src": "10.66.0.2/32",
+            "lookup": "100",
+            "priority": "100"
+          }
+        },
+        {
+          "section": "vpn_mark_rule",
+          "type": "rule",
+          "options": {
+            "mark": "0x1/0x1",
+            "lookup": "100",
+            "priority": "200"
+          }
+        }
+      ]
+    },
+    "dhcp": {
+      "triggers": ["dnsmasq"],
+      "sections": [
+        {
+          "section": "@dnsmasq[0]",
+          "options": {
+            "filter_aaaa": "1",
+            "filter_a": "0",
+            "noresolv": "1"
+          },
+          "deleteOptions": [
+            "address"
+          ]
+        },
+        {
+          "section": "host_flashforge_am5",
+          "type": "host",
+          "replaceAnonymousByName": "FlashForge-AM5",
+          "options": {
+            "name": "FlashForge-AM5",
+            "mac": "F0:A8:82:C3:61:F0",
+            "ip": "192.168.1.41",
+            "leasetime": "12h"
+          }
+        },
+        {
+          "section": "host_brim_pc",
+          "type": "host",
+          "replaceAnonymousByName": "BrimPC",
+          "options": {
+            "name": "BrimPC",
+            "mac": "04:D4:C4:49:31:E9",
+            "ip": "192.168.1.50",
+            "leasetime": "12h"
+          }
+        },
+        {
+          "section": "host_win_mcnu275r917",
+          "type": "host",
+          "replaceAnonymousByName": "WIN-MCNU275R917",
+          "options": {
+            "name": "WIN-MCNU275R917",
+            "mac": "A8:3B:76:4E:49:F7",
+            "ip": "192.168.1.160",
+            "leasetime": "12h"
+          }
+        },
+        {
+          "section": "ru_dns",
+          "type": "ipset",
+          "options": {
+            "table_family": "inet",
+            "table": "vpn_pbr",
+            "family": "4"
+          },
+          "lists": {
+            "name": [
+              "ru_dns_ips"
+            ],
+            "domain": [
+              "ru",
+              "su",
+              "xn--p1ai",
+              "2gis.com",
+              "avito.st",
+              "brimworld.online",
+              "ozonusercontent.com",
+              "userapi.com",
+              "vk.com",
+              "vk.me",
+              "vkuseraudio.net",
+              "vkuserlive.net",
+              "vkuservideo.net",
+              "wbstatic.net",
+              "yandex.net",
+              "yastatic.net"
+            ]
+          }
+        }
+      ]
+    },
+    "firewall": {
+      "triggers": ["firewall"],
+      "sections": [
+        {
+          "section": "vpn",
+          "type": "zone",
+          "options": {
+            "name": "vpn",
+            "input": "REJECT",
+            "output": "ACCEPT",
+            "forward": "DROP",
+            "masq": "1",
+            "mtu_fix": "1"
+          },
+          "lists": {
+            "network": [
+              "awg0"
+            ]
+          }
+        },
+        {
+          "section": "lan_vpn",
+          "type": "forwarding",
+          "options": {
+            "src": "lan",
+            "dest": "vpn"
+          }
+        },
+        {
+          "section": "allow_awg_bram",
+          "type": "rule",
+          "options": {
+            "name": "Allow-AWG-Bram",
+            "src": "wan",
+            "proto": "udp",
+            "dest_port": "41763",
+            "target": "ACCEPT",
+            "family": "ipv4"
+          },
+          "lists": {
+            "src_ip": [
+              "217.144.189.29",
+              "77.221.155.29"
+            ]
+          }
+        },
+        {
+          "section": "redirect_pubg_web_radar",
+          "type": "redirect",
+          "replaceAnonymousByName": "PubgWebRadar",
+          "options": {
+            "name": "PubgWebRadar",
+            "src": "wan",
+            "dest": "lan",
+            "dest_ip": "192.168.1.160",
+            "src_dport": "7290",
+            "dest_port": "7290",
+            "target": "DNAT",
+            "reflection": "0"
+          },
+          "lists": {
+            "proto": [
+              "tcp",
+              "udp"
+            ]
+          }
+        },
+        {
+          "section": "redirect_moonlight",
+          "type": "redirect",
+          "replaceAnonymousByName": "Moonlight",
+          "options": {
+            "name": "Moonlight",
+            "src": "wan",
+            "dest": "lan",
+            "dest_ip": "192.168.1.125",
+            "src_dport": "47989",
+            "dest_port": "47989",
+            "target": "DNAT",
+            "reflection": "0"
+          },
+          "lists": {
+            "proto": [
+              "tcp",
+              "udp"
+            ]
+          }
+        },
+        {
+          "section": "redirect_moonlight_https",
+          "type": "redirect",
+          "replaceAnonymousByName": "MoonlightHTTPS",
+          "options": {
+            "name": "MoonlightHTTPS",
+            "src": "wan",
+            "dest": "lan",
+            "dest_ip": "192.168.1.125",
+            "src_dport": "47984",
+            "dest_port": "47984",
+            "target": "DNAT",
+            "reflection": "0"
+          },
+          "lists": {
+            "proto": [
+              "tcp",
+              "udp"
+            ]
+          }
+        },
+        {
+          "section": "redirect_dma",
+          "type": "redirect",
+          "replaceAnonymousByName": "DMA",
+          "options": {
+            "name": "DMA",
+            "src": "wan",
+            "dest": "lan",
+            "dest_ip": "192.168.1.160",
+            "src_dport": "42022",
+            "dest_port": "42022",
+            "target": "DNAT",
+            "reflection": "0"
+          },
+          "lists": {
+            "proto": [
+              "tcp",
+              "udp"
+            ]
+          }
+        }
+      ]
+    },
+    "https-dns-proxy": {
+      "triggers": ["https-dns-proxy", "dnsmasq"],
+      "sections": [
+        {
+          "section": "config",
+          "type": "main",
+          "options": {
+            "canary_domains_icloud": "1",
+            "canary_domains_mozilla": "1",
+            "dnsmasq_config_update": "*",
+            "force_dns": "1",
+            "notrack_dns": "1",
+            "procd_trigger_wan6": "0",
+            "user": "nobody",
+            "group": "nogroup",
+            "listen_addr": "127.0.0.1",
+            "force_ip_family": "auto"
+          },
+          "lists": {
+            "force_dns_port": [
+              "53",
+              "853"
+            ],
+            "force_dns_src_interface": [
+              "lan"
+            ]
+          }
+        },
+        {
+          "section": "quad9",
+          "type": "https-dns-proxy",
+          "options": {
+            "bootstrap_dns": "9.9.9.10,149.112.112.10",
+            "resolver_url": "https://dns10.quad9.net/dns-query",
+            "listen_addr": "127.0.0.1",
+            "listen_port": "5053"
+          }
+        }
+      ]
+    }
+  }
+}

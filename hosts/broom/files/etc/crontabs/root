@@ -1,0 +1,1 @@
+15 4 * * * /etc/vpn-pbr/update-ru-ips.sh >/dev/null 2>&1

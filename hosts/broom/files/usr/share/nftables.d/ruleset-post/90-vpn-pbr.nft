@@ -1,0 +1,73 @@
+add table inet vpn_pbr
+flush table inet vpn_pbr
+
+table inet vpn_pbr {
+	set local_ips {
+		type ipv4_addr
+		flags interval
+		elements = {
+			0.0.0.0/8,
+			10.0.0.0/8,
+			100.64.0.0/10,
+			127.0.0.0/8,
+			169.254.0.0/16,
+			172.16.0.0/12,
+			192.168.0.0/16,
+			195.170.192.0/22,
+			224.0.0.0/4,
+			240.0.0.0/4
+		}
+	}
+
+	set bypass_ips {
+		type ipv4_addr
+		elements = {
+			9.9.9.10,
+			149.112.112.10,
+			77.221.155.29,
+			217.144.189.29,
+			185.148.38.208
+		}
+	}
+
+	set ru_ips {
+		type ipv4_addr
+		flags interval
+		auto-merge
+		include "/etc/vpn-pbr/ru_ips.nft"
+	}
+
+	set ru_dns_ips {
+		type ipv4_addr
+		flags timeout
+		timeout 1d
+	}
+
+	chain prerouting {
+		type filter hook prerouting priority mangle; policy accept;
+
+		# Tag every new connection arriving from WAN (including the 4 WAN->LAN
+		# port forwards: 7290, 47989, 47984, 42022, and any reverse-proxied
+		# ports) so return traffic from LAN always leaves via WAN.
+		iifname "wan" ct state new counter ct mark set ct mark | 0x2
+
+		# Policy-route only IPv4 traffic originating from br-lan.
+		iifname != "br-lan" return
+		meta nfproto != ipv4 return
+
+		# Keep replies to WAN-initiated connections on WAN.
+		ct mark & 0x2 != 0 counter return
+
+		# Forced DNS (53/853) is handled locally by dnsmasq / https-dns-proxy.
+		meta l4proto { tcp, udp } th dport { 53, 853 } return
+
+		# Direct WAN bypass for local subnets, VPS/DNS endpoints, RU GeoIP, and RU DNS.
+		ip daddr @local_ips return
+		ip daddr @bypass_ips counter return
+		ip daddr @ru_ips counter return
+		ip daddr @ru_dns_ips counter return
+
+		# Mark all remaining foreign LAN IPv4 traffic for routing table 100 (awg0).
+		counter meta mark set meta mark | 0x1
+	}
+}

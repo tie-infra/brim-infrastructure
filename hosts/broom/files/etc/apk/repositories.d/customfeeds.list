@@ -1,0 +1,4 @@
+# add your custom package feeds here
+#
+# http://www.example.com/path/to/files/packages.adb
+https://2grey.github.io/awg-openwrt/25.12.6/mediatek/filogic/packages.adb

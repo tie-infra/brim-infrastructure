@@ -18,6 +18,7 @@
         overlays = [
           inputs.btrfs-rollback.overlays.default
           packagesOverlay
+          (import ./overlays/amneziawg/default.nix)
           (import ./overlays/zapret/default.nix)
         ];
 

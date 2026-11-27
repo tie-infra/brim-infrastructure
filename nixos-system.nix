@@ -18,6 +18,7 @@ let
     ./modules/base-configuration.nix
     ./modules/btrfs-erase-your-darlings.nix
     ./modules/trust-admins.nix
+    ./modules/amneziawg.nix
     ./modules/outline.nix
     ./modules/garage.nix
     ./modules/garage-ui.nix

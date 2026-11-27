@@ -294,6 +294,7 @@ let
       description = "AmneziaWG interface ${name}";
       wantedBy = [ "multi-user.target" ];
       after = [
+        "systemd-modules-load.service"
         "network-online.target"
         "nss-lookup.target"
       ];
@@ -301,17 +302,17 @@ let
         "network-online.target"
         "nss-lookup.target"
       ];
+      path = [
+        cfg.package
+        pkgs.iproute2
+      ];
       restartTriggers = [ configFile ];
       environment.CONFIG_FILE = configFile;
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
 
-        ExecSearchPath = lib.makeBinPath [
-          pkgs.amneziawg-configure
-          cfg.package
-          pkgs.iproute2
-        ];
+        ExecSearchPath = lib.makeBinPath [ pkgs.amneziawg-configure ];
         ExecStart = "amneziawg-configure up \${CONFIG_FILE}";
         ExecStop = "amneziawg-configure down \${CONFIG_FILE}";
 

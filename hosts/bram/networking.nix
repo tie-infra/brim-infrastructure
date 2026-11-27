@@ -18,7 +18,7 @@ in
       allowedUDPPorts = [ ];
       filterForward = true;
       extraForwardRules = ''
-        iifname "awg0" oifname "${wanInterface}" accept
+        iifname { "awg0", "awg1" } oifname "${wanInterface}" accept
       '';
     };
 
@@ -27,14 +27,14 @@ in
       content = ''
         chain forward-mss {
           type filter hook forward priority mangle; policy accept;
-          iifname "awg0" tcp flags syn tcp option maxseg size set rt mtu
-          oifname "awg0" tcp flags syn tcp option maxseg size set rt mtu
+          iifname { "awg0", "awg1" } tcp flags syn tcp option maxseg size set rt mtu
+          oifname { "awg0", "awg1" } tcp flags syn tcp option maxseg size set rt mtu
         }
 
         chain postrouting {
           type nat hook postrouting priority srcnat; policy accept;
-          oifname "${wanInterface}" ip saddr 10.66.0.0/24 snat ip to ${activeIpv4}
-          oifname "${wanInterface}" ip6 saddr fd66:66::/64 snat ip6 to ${activeIpv6}
+          oifname "${wanInterface}" ip saddr 10.66.0.0/23 snat ip to ${activeIpv4}
+          oifname "${wanInterface}" ip6 saddr fd66:66::/48 snat ip6 to ${activeIpv6}
         }
       '';
     };

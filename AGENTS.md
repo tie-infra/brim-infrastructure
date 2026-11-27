@@ -109,7 +109,7 @@ and Git metadata.
   consumed by its package and module configuration.
 
 Use `modules/garage.nix` as a representative option-based service module,
-`modules/garage-webui.nix` as a systemd hardening example,
+`modules/garage-ui.nix` as a systemd hardening example,
 and `packages/pufferpanel/package.nix` as a package definition example.
 
 For host-level composition and SOPS integration, follow the closest analogous

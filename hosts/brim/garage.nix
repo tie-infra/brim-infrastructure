@@ -1,6 +1,5 @@
 {
   config,
-  pkgs,
   ...
 }:
 let
@@ -23,7 +22,7 @@ let
 
   garageS3Region = "garage";
 
-  garageWebuiPort = 3919;
+  garageUiPort = 3919;
 in
 {
   services.caddy.settings.apps.http.servers.default = {
@@ -35,7 +34,7 @@ in
             handler = "reverse_proxy";
             upstreams = [
               {
-                dial = "localhost:${toString garageWebuiPort}";
+                dial = "localhost:${toString garageUiPort}";
               }
             ];
           }
@@ -106,28 +105,29 @@ in
     ];
   };
 
-  services.garage-webui = {
+  services.garage-ui = {
     enable = true;
+    adminTokenFile = config.sops.secrets."garage/admin-token".path;
+    settings = {
+      server = {
+        host = "::1";
+        port = garageUiPort;
+        domain = uiHost;
+        protocol = "https";
+        root_url = "https://${uiHost}";
+      };
+      garage = {
+        endpoint = "http://localhost:${toString garageS3ApiPort}";
+        region = garageS3Region;
+        admin_endpoint = "http://localhost:${toString garageAdminPort}";
+      };
+      auth.token.enabled = true;
+    };
   };
 
-  systemd.services.garage-webui = {
-    restartTriggers = [
-      config.environment.etc."garage.toml".source
-    ];
-    environment = {
-      HOST = "[::1]";
-      PORT = toString garageWebuiPort;
-      CONFIG_PATH = pkgs.emptyFile; # do not depend on /etc/garage.toml
-      API_BASE_URL = "http://localhost:${toString garageAdminPort}";
-      S3_ENDPOINT_URL = "http://localhost:${toString garageS3ApiPort}";
-      S3_REGION = garageS3Region;
-      # API_ADMIN_KEY is set in EnvironmentFile
-    };
-    serviceConfig = {
-      EnvironmentFile = [
-        config.sops.templates."garage-webui.env".path
-      ];
-    };
+  systemd.services.garage-ui = {
+    after = [ config.systemd.services.garage.name ];
+    wants = [ config.systemd.services.garage.name ];
   };
 
   services.garage = {
@@ -181,21 +181,6 @@ in
     };
   };
 
-  sops.templates."garage-webui.env" = {
-    content = ''
-      AUTH_USER_PASS=${config.sops.placeholder."garage-webui/user-pass"}
-      API_ADMIN_KEY=${config.sops.placeholder."garage/admin-token"}
-    '';
-    restartUnits = [
-      config.systemd.services.garage-webui.name
-    ];
-  };
-
-  sops.secrets."garage-webui/user-pass" = {
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [ config.systemd.services.garage-webui.name ];
-  };
-
   sops.secrets."garage/rpc-secret" = {
     mode = "0440"; # u=r,g=r,o=
     group = config.users.groups.garage.name;
@@ -209,7 +194,7 @@ in
     sopsFile = ../../secrets/brim.sops.yaml;
     restartUnits = [
       config.systemd.services.garage.name
-      config.systemd.services.garage-webui.name
+      config.systemd.services.garage-ui.name
     ];
   };
 

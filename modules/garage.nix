@@ -1,163 +1,67 @@
 {
   config,
+  lib,
+  pkgs,
   ...
 }:
 let
-  websiteHosts = [
-    "brim.su"
-    "api.brim.su"
-    "pubg-wiki.brim.su"
-  ];
-
-  s3ApiHost = "s3.brim.su";
-  s3WebHost = "web.brim.su";
-
-  hostAddress = "[2a00:f440:0:614::11]";
-
-  garageS3ApiPort = 3900;
-  garageRpcPort = 3901;
-  garageS3WebPort = 3902;
-  garageAdminPort = 3903;
-
-  garageS3Region = "garage";
+  cfg = config.services.garage;
+  settingsFormat = pkgs.formats.toml { };
+  configFile = settingsFormat.generate "garage.toml" cfg.settings;
 in
 {
-  services.caddy.settings.apps.http.servers.default = {
-    routes = [
-      {
-        match = [
-          {
-            host = [
-              s3ApiHost
-              ("*." + s3ApiHost)
-            ];
-          }
-        ];
-        handle = [
-          {
-            handler = "reverse_proxy";
-            upstreams = [
-              {
-                dial = "localhost:${toString garageS3ApiPort}";
-              }
-            ];
-          }
-        ];
-      }
-      {
-        match = [
-          {
-            host = websiteHosts ++ [
-              ("*." + s3WebHost)
-            ];
-          }
-        ];
-        handle = [
-          {
-            handler = "rewrite";
-            # Match paths whose final component:
-            # - is non-empty
-            # - contains no dot
-            # - does not end in a slash
-            path_regexp = [
-              {
-                find = "^(.*/[^./]+)$";
-                replace = "$1.html";
-              }
-            ];
-          }
-          {
-            handler = "reverse_proxy";
-            upstreams = [
-              {
-                dial = "localhost:${toString garageS3WebPort}";
-              }
-            ];
-          }
-        ];
-      }
-      {
-        match = [ { host = [ "assets.brim.su" ]; } ];
-        handle = [
-          {
-            handler = "static_response";
-            status_code = 301; # Moved Permanently
-            headers.Location = [ "https://brim.su/assets/" ];
-          }
-        ];
-      }
+  options.services.garage = {
+    enable = lib.mkEnableOption "Garage Object Storage (S3 compatible)";
+
+    package = lib.mkPackageOption pkgs "garage" { };
+
+    settings = lib.mkOption {
+      type = lib.types.submodule {
+        freeformType = settingsFormat.type;
+      };
+      description = ''
+        Garage configuration, see <https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/> for reference.
+      '';
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.etc."garage.toml" = {
+      source = configFile;
+    };
+
+    environment.systemPackages = [
+      cfg.package
     ];
-  };
 
-  services.garage = {
-    enable = true;
-    settings = {
-      metadata_dir = "meta";
-      data_dir = "data";
-
-      allow_world_readable_secrets = true;
-
-      rpc_bind_addr = "[::]:${toString garageRpcPort}";
-      rpc_public_addr = "${hostAddress}:${toString garageRpcPort}";
-      rpc_secret_file = config.sops.secrets."garage/rpc-secret".path;
-
-      replication_factor = 1;
-
-      s3_api = {
-        s3_region = garageS3Region;
-        api_bind_addr = "[::]:${toString garageS3ApiPort}";
-        root_domain = "." + s3ApiHost;
+    systemd.services.garage = {
+      description = "Garage Object Storage (S3 compatible)";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      restartTriggers = [ configFile ];
+      environment = {
+        RUST_LOG = "garage=info";
+        RUST_BACKTRACE = "1";
       };
+      serviceConfig = {
+        Type = "exec";
+        Restart = "on-failure";
 
-      s3_web = {
-        bind_addr = "[::]:${toString garageS3WebPort}";
-        root_domain = "." + s3WebHost;
-      };
+        ExecSearchPath = lib.makeBinPath [ cfg.package ];
+        ExecStart = "garage server";
 
-      admin = {
-        api_bind_addr = "[::]:${toString garageAdminPort}";
-        admin_token_file = config.sops.secrets."garage/admin-token".path;
-        metrics_token_file = config.sops.secrets."garage/metrics-token".path;
+        WorkingDirectory = "%S/garage";
+
+        StateDirectory = "garage";
+        StateDirectoryMode = "0750"; # u=rwx,g=rx,o=
+
+        DynamicUser = true;
+        ProtectHome = true;
+        NoNewPrivileges = true;
+
+        # https://garagehq.deuxfleurs.fr/documentation/cookbook/systemd/
+        LimitNOFILE = 42000;
       };
     };
-  };
-
-  users = {
-    users.garage = {
-      isSystemUser = true;
-      group = config.users.groups.garage.name;
-    };
-    groups.garage = { };
-  };
-
-  systemd.services.garage = {
-    serviceConfig = {
-      User = config.users.users.garage.name;
-      Group = config.users.groups.garage.name;
-      SupplementaryGroups = [
-        config.users.groups.keys.name
-      ];
-    };
-  };
-
-  sops.secrets."garage/rpc-secret" = {
-    mode = "0440"; # u=r,g=r,o=
-    group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [ config.systemd.services.garage.name ];
-  };
-
-  sops.secrets."garage/admin-token" = {
-    mode = "0440"; # u=r,g=r,o=
-    group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [ config.systemd.services.garage.name ];
-  };
-
-  sops.secrets."garage/metrics-token" = {
-    mode = "0440"; # u=r,g=r,o=
-    group = config.users.groups.garage.name;
-    sopsFile = ../../secrets/brim.sops.yaml;
-    restartUnits = [ config.systemd.services.garage.name ];
   };
 }

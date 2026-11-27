@@ -20,6 +20,7 @@ let
     ./modules/trust-admins.nix
     ./modules/outline.nix
     ./modules/garage.nix
+    ./modules/garage-ui.nix
     ./modules/zapret/nfqws.nix
     ./modules/zapret/nfqws-systemd.nix
     { inherit disabledModules; }

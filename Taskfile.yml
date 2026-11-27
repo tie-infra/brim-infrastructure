@@ -63,3 +63,15 @@ tasks:
           BUILD_HOST: nixos@bram-spare.brim.su
           TARGET_HOST: nixos@bram-spare.brim.su
           FLAKE_URI: .#bram
+
+  diff:broom:
+    cmds:
+      - broom-deploy diff --config hosts/broom/config.json {{.CLI_ARGS}}
+
+  check:broom:
+    cmds:
+      - broom-deploy check --config hosts/broom/config.json {{.CLI_ARGS}}
+
+  deploy:broom:
+    cmds:
+      - broom-deploy deploy --config hosts/broom/config.json {{.CLI_ARGS}}

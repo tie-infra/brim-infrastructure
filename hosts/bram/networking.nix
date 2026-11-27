@@ -17,6 +17,26 @@ in
       allowedTCPPorts = [ ];
       allowedUDPPorts = [ ];
       filterForward = true;
+      extraForwardRules = ''
+        iifname "awg0" oifname "${wanInterface}" accept
+      '';
+    };
+
+    nftables.tables.vpn-nat = {
+      family = "inet";
+      content = ''
+        chain forward-mss {
+          type filter hook forward priority mangle; policy accept;
+          iifname "awg0" tcp flags syn tcp option maxseg size set rt mtu
+          oifname "awg0" tcp flags syn tcp option maxseg size set rt mtu
+        }
+
+        chain postrouting {
+          type nat hook postrouting priority srcnat; policy accept;
+          oifname "${wanInterface}" ip saddr 10.66.0.0/24 snat ip to ${activeIpv4}
+          oifname "${wanInterface}" ip6 saddr fd66:66::/64 snat ip6 to ${activeIpv6}
+        }
+      '';
     };
   };
 

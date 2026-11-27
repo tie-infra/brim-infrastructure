@@ -16,6 +16,7 @@
     bram = nixosWithSystem "x86_64-linux" [
       ./hosts/bram/configuration.nix
       ./hosts/bram/networking.nix
+      ./hosts/bram/amneziawg.nix
     ];
   };
 }

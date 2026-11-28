@@ -14,7 +14,7 @@ Declarative OpenWrt configuration for the home router `broom` (`broom.brim.su`, 
   - `/etc/apk/repositories.d/customfeeds.list` — signed `2Grey/awg-openwrt` feed for AmneziaWG 3.1.
 - **UCI (`hosts/broom/config.json`):**
   - `system`: hostname `broom`, UTC timezone, NTP, WAN LED.
-  - `network`: `wan` (Quad9 DNS10, `peerdns=0`), `wan6` disabled, passive `awg0` (AWG 3.1 on `41763/udp`, `10.66.0.2/30`, MTU `1340`), `awg0_bram` peer, table `100` default route + source/mark rules.
+  - `network`: `wan` (Quad9 DNS10, `peerdns=0`), `wan6` disabled, passive `awg0` (AWG 3.1 on `41763/udp`, `10.66.0.2/30`, MTU `1300`), `awg0_bram` peer, table `100` default route + source/mark rules.
   - `dhcp`: `dnsmasq-full` (`filter_aaaa=1`, `noresolv=1`), static DHCP leases, `ipset 'ru_dns'` populating `inet vpn_pbr ru_dns_ips`.
   - `firewall`: `vpn` zone (`awg0`, `masq=1`, `mtu_fix=1`), `lan -> vpn` forwarding, `Allow-AWG-Bram` (`41763/udp` restricted to `bram` IPs), and the 4 WAN→LAN port forwards (`PubgWebRadar`, `Moonlight`, `MoonlightHTTPS`, `DMA`).
   - `https-dns-proxy`: Quad9 DNS10 DoH (`https://dns10.quad9.net/dns-query`, `force_dns=1`).

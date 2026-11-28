@@ -70,7 +70,13 @@ in
         GatewayOnLink = true;
       }
     ];
-    linkConfig.RequiredForOnline = "routable";
+    linkConfig = {
+      # Aeza's hypervisor underlay enforces a 1452-byte path MTU for both IPv4
+      # and IPv6; matching it prevents outer AWG packets and TCP segments from
+      # being silently blackholed.
+      MTUBytes = 1452;
+      RequiredForOnline = "routable";
+    };
   };
 
   boot = {

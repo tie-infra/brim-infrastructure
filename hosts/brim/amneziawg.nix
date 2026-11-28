@@ -28,9 +28,10 @@ in
       "10.66.1.2/30"
       "fd66:66:1::2/64"
     ];
-    # Outer transport runs over IPv6 (40-byte header) with S4=24 and up to 48B
-    # content padding, so 1320 keeps every encrypted datagram under 1500B.
-    mtu = 1320;
+    # Aeza's IPv6 underlay PMTU is 1452B. With IPv6+UDP (48B), AWG+AEAD (32B),
+    # S4=24, and ContentPaddingAddition 0-32 (up to 48B aligned), 1280 fits
+    # under 1452B (max 1432B) while meeting IPv6's 1280B minimum MTU.
+    mtu = 1280;
     listenPort = awgPort;
     privateKeyFile = config.sops.secrets."amneziawg/bram/private-key".path;
     headerProtectionKeyFile = config.sops.secrets."amneziawg/bram/header-protection-key".path;
@@ -57,21 +58,22 @@ in
       }
     ];
 
-    # Independent AWG 3.1 anti-TSPU profile for bram <-> brim (no I1..I5 while
-    # upstream kernel bug #139 remains open). Longer RekeyAfterTime and
+    # AWG 3.1 profile matching bram (S1..S4 equal, H1..H4 = 1..4 per upstream
+    # kernel issue #226; HeaderProtectionKey encrypts headers on the wire, no
+    # I1..I5 while kernel bug #139 remains open). Longer RekeyAfterTime and
     # KeepaliveTimeout than bram ensure bram always initiates handshakes.
     jc = 5;
     jmin = 52;
     jmax = 296;
-    s1 = 44;
-    s2 = 72;
-    s3 = 32;
+    s1 = 24;
+    s2 = 24;
+    s3 = 24;
     s4 = 24;
-    h1 = "312450100-358912400";
-    h2 = "841205300-894120500";
-    h3 = "1412890100-1465120300";
-    h4 = "1945120300-1998450200";
-    contentPaddingAddition = "0-48";
+    h1 = "1";
+    h2 = "2";
+    h3 = "3";
+    h4 = "4";
+    contentPaddingAddition = "0-32";
     rekeyAfterTime = "150-165";
     keepaliveTimeout = "35-45";
     randomTrailers = true;

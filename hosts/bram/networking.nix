@@ -31,9 +31,15 @@ in
           oifname { "awg0", "awg1" } tcp flags syn tcp option maxseg size set rt mtu
         }
 
+        # Dedicated non-hook chain so awg-failover can atomically swap the
+        # active IPv4 SNAT address without touching forward-mss or IPv6 SNAT.
+        chain postrouting-v4 {
+          oifname "${wanInterface}" ip saddr 10.66.0.0/23 snat ip to ${activeIpv4}
+        }
+
         chain postrouting {
           type nat hook postrouting priority srcnat; policy accept;
-          oifname "${wanInterface}" ip saddr 10.66.0.0/23 snat ip to ${activeIpv4}
+          jump postrouting-v4
           oifname "${wanInterface}" ip6 saddr fd66:66::/32 snat ip6 to ${activeIpv6}
         }
       '';

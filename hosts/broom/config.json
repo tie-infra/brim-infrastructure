@@ -320,6 +320,23 @@
           }
         },
         {
+          "section": "allow_vpn_ping",
+          "type": "rule",
+          "options": {
+            "name": "Allow-AWG-Ping",
+            "src": "vpn",
+            "src_ip": "10.66.0.1",
+            "proto": "icmp",
+            "target": "ACCEPT",
+            "family": "ipv4"
+          },
+          "lists": {
+            "icmp_type": [
+              "echo-request"
+            ]
+          }
+        },
+        {
           "section": "redirect_pubg_web_radar",
           "type": "redirect",
           "replaceAnonymousByName": "PubgWebRadar",

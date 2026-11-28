@@ -18,6 +18,7 @@
       ./hosts/bram/configuration.nix
       ./hosts/bram/networking.nix
       ./hosts/bram/amneziawg.nix
+      ./hosts/bram/awg-failover.nix
     ];
   };
 }

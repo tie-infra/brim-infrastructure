@@ -14,6 +14,9 @@ in
       # S4=24, and ContentPaddingAddition 0-32 (up to 48B aligned), 1300 leaves
       # 20B headroom below 1452B so large packets never blackhole.
       mtu = 1300;
+      # Tag outer awg0 UDP packets so awg-failover can steer their source IPv4
+      # via policy table 110 without restarting the interface.
+      fwMark = "0x6600";
       # Ephemeral outbound-only UDP port: bram initiates the tunnel toward broom
       # and keeps zero inbound VPN ports open.
       privateKeyFile = config.sops.secrets."amneziawg/broom/private-key".path;
